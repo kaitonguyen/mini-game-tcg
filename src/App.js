@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { Box, Button, FormControl, InputLabel, MenuItem, Modal, Select, Stack, Typography } from '@mui/material';
+import { Box, Button, Divider, FormControl, IconButton, InputLabel, MenuItem, Modal, Select, Stack, TextField, Typography } from '@mui/material';
 import { Timeline, TimelineConnector, TimelineContent, TimelineDot, TimelineItem, timelineItemClasses, TimelineSeparator } from '@mui/lab';
-
-const words = "Hãy liệng bánh ngươi nơi mặt nước , vì khỏi lâu ngày ngươi sẽ tìm nó lại . Truyền đạo 11 : 1".split(" ");
-let wordOpts = [...words];
-wordOpts = wordOpts.sort();
 
 const modalStyle = {
   position: 'absolute',
@@ -43,6 +39,13 @@ const BasicTimeline = ({ timelineItems }) => {
 }
 
 function App() {
+  const [words, setWords] = useState([]);
+  const [wordOpts, setWordOpts] = useState([]);
+
+  useEffect(() => {
+    setWordOpts(words.sort());
+  }, [words]);
+
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isRunning, setIsRunning] = useState(false);
   const [intervalTime, setIntervalTime] = useState(100); // Starting speed
@@ -197,15 +200,52 @@ function App() {
     setAnswer("");
   };
 
-  console.log(hiddenWordIndexes);
+  const [settingModalOpen, setSettingModalOpen] = useState(false);
+  const openSettingModal = () => {
+    setSettingModalOpen(true);
+  };
+  const closeSettingModal = () => {
+    setSettingModalOpen(false);
+  };
+
+  const [settings, setSettings] = useState({
+    keyVerse: "",
+    hiddenWords: true,
+    intervalTime: 100,
+    hiddenWordIndexes: [],
+    timelineItems: [],
+  })
+
+  const handleChangeSettings = (e) => {
+    setSettings({
+      ...settings,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const saveSettings = (e) => {
+    if (settings.keyVerse) {
+      setWords(settings.keyVerse.split(" "));
+    }
+  };
 
   return (
     <>
-      <Box component="section" sx={{ display: 'flex', flexWrap: 'wrap', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#282c34', color: 'white', px: 10 }}>
+      <Button
+        color="success"
+        variant="contained"
+        sx={{ position: 'fixed', top: 10 + "px", right: 10 + "px", width: 50 + "px", height: 50 + "px", minWidth: 0, borderRadius: "50%", p: 0 }}
+        onClick={openSettingModal}
+      >
+        <span class="material-symbols-outlined">
+          settings
+        </span>
+      </Button>
+      <Box component="section" sx={{ display: 'flex', flexWrap: 'wrap', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#282c34', color: 'white', px: 10, pt: 10 }}>
         <Stack direction="row" useFlexGap flexWrap="wrap" spacing={2} justifyContent="center" sx={{
-          padding: '0', width: '100%',
+          p: '0', width: '100%',
         }}>
-          {words.map((w, i) =>
+          {words && words.length > 0 ? words.map((w, i) =>
             <Button
               key={i}
               variant="contained"
@@ -217,15 +257,19 @@ function App() {
               }}>
               {hiddenWords ? w : hiddenWordIndexes[i] === -1 || hiddenWordIndexes[i] === -2 ? w : i + 1}
             </Button>)
+            : <Typography sx={{ fontSize: '3.5rem' }} color='white'>Chưa có câu gốc!</Typography>
           }
         </Stack>
-        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ width: '100%', mt: 10 + "px" }}>
           <Box sx={{
             height: '7rem', width: '700px', overflowY: 'scroll', backgroundColor: '#373d4a',
             display: 'flex',
             flexDirection: 'column-reverse'
           }}>
             <BasicTimeline timelineItems={timelineItems} />
+          </Box>
+          <Box sx={{ textAlign: 'center' }} textAlign={'center'} alignItems={'center'}>
+            Dev by <a href="https://github.com/kaitonguyen" target="_blank" rel="noreferrer" style={{ color: 'white' }}>Kỳ Nguyễn</a>. Ver 1.1
           </Box>
           <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
             <Button variant="contained" color='secondary' sx={{ fontSize: '1.5rem' }} onClick={() => setHiddenWords(!hiddenWords)} disabled={!hiddenWords}>
@@ -282,6 +326,54 @@ function App() {
               {/* {words[open]} */}
             </Typography>
             <Button variant='contained' color='info' size='large' sx={{ fontSize: '1.5rem' }} disabled={!answer} onClick={() => { checkAnswer(); }}>Đáp án</Button>
+          </Box>
+        </Modal>
+      }
+      {
+        settingModalOpen !== false &&
+        <Modal
+          open={settingModalOpen}
+          onClose={closeSettingModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 700,
+              backgroundColor: '#ffffff',
+              p: 4,
+            }}>
+            <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                Cài đặt
+              </Typography>
+              <Button variant='text' color='primary' sx={{ fontSize: '1.2rem' }} onClick={closeSettingModal}>
+                <span class="material-symbols-outlined">
+                  close
+                </span>
+              </Button>
+            </Stack>
+            <Divider />
+            <Stack spacing={4} mt={4}>
+              <FormControl fullWidth>
+                <TextField
+                  label="Câu gốc"
+                  multiline
+                  rows={4}
+                  maxRows={7}
+                  helperText="Các từ, dấu câu được cắt bằng 1 khoảng trắng"
+                  name="keyVerse"
+                  value={settings.keyVerse}
+                  onChange={handleChangeSettings}
+                />
+              </FormControl>
+            </Stack>
+            <Divider sx={{ mt: 4 }} />
+            <Button variant='contained' color='primary' sx={{ fontSize: '1.2rem' }} sx={{ mt: 4 }} onClick={() => { saveSettings(); }}>Lưu</Button>
           </Box>
         </Modal>
       }
